@@ -67,6 +67,9 @@ float g_random(vec4  v)
   return g_goldNoise(v, g_floatConstruct(g_hash(floatBitsToUint(v))));
 }
 
+uniform float u_rand;
+uniform sampler2D u_image;
+
 uniform float u_invert;
 uniform vec3 u_hsl;
 uniform float u_gamma;
@@ -76,7 +79,6 @@ uniform float u_grayscale;
 uniform vec3 u_temperature;
 uniform float u_transparency;
 
-uniform sampler2D u_image;
 in vec2 v_texCoord;
 out vec4 outColor;
 
@@ -101,11 +103,11 @@ vec3 rgbToHSL(float cR, float cG, float cB)
 
   if (l < 0.5f)  
   {
-    s = del / ( max + min );
+    s = del / (max + min);
   }
   else  
   {
-    s = del / ( 2.0f - max - min ); 
+    s = del / (2.0f - max - min); 
   }
 
   float delR = ( ( ( max - r ) / 6.0f ) + ( del / 2.0f ) ) / del;
@@ -118,11 +120,11 @@ vec3 rgbToHSL(float cR, float cG, float cB)
   }
   else if (g == max) 
   {
-    h = ( 1.0f / 3.0f ) + delR - delB;
+    h = (1.0f / 3.0f) + delR - delB;
   }
   else if (b == max) 
   {
-    h = ( 2.0f / 3.0f ) + delG - delR;
+    h = (2.0f / 3.0f) + delG - delR;
   }
 
   if (h < 0.0f) 
@@ -132,31 +134,42 @@ vec3 rgbToHSL(float cR, float cG, float cB)
 
   if (h > 1.0f) 
   {
-    h -= 1.0;
+    h -= 1.0f;
   }
 
   return vec3(h, s, l);
 }
 
-float _hue_2_rgb_(float v1, float v2, float vH) {
-  if (vH < 0.0) 
+float _hue_2_rgb_(float v1, float v2, float vH) 
+{
+  if (vH < 0.0f) 
   {
-    vH += 1.0;
+    vH += 1.0f;
   }
 
-  if (vH > 1.0) 
+  if (vH > 1.0f) 
   {
-    vH -= 1.0;
+    vH -= 1.0f;
   }
 
-  if ((6.0f * vH) < 1.0f) return (v1 + (v2 - v1) * 6.0f * vH);
-  if ((2.0f * vH) < 1.0f) return v2;
-  if ((3.0f * vH) < 2.0f) return (v1 + (v2 - v1) * ((2.0f / 3.0f) - vH) * 6.0f);
+  if ((6.0f * vH) < 1.0f) 
+  {
+    return (v1 + (v2 - v1) * 6.0f * vH);
+  }
+  if ((2.0f * vH) < 1.0f)
+  {
+    return v2;
+  }
+  if ((3.0f * vH) < 2.0f)
+  {
+    return (v1 + (v2 - v1) * ((2.0f / 3.0f) - vH) * 6.0f);
+  }
 
   return v1;
 }
 
-vec3 hslToRGB(float h, float s, float l) {
+vec3 hslToRGB(float h, float s, float l) 
+{
   float r = 0.0f;
   float g = 0.0f;
   float b = 0.0f;
@@ -172,7 +185,7 @@ vec3 hslToRGB(float h, float s, float l) {
     return vec3(r, g, b);
   }
 
-  if (l < 0.5) 
+  if (l < 0.5f) 
   {
     val2 = l * (1.0f + s);
   }
@@ -181,7 +194,7 @@ vec3 hslToRGB(float h, float s, float l) {
     val2 = (l + s) - (l * s);
   }
       
-  val1 = 2.0 * l - val2;
+  val1 = 2.0f * l - val2;
 
   r = 255.0f * _hue_2_rgb_(val1, val2, h + (1.0f / 3.0f));
   g = 255.0f * _hue_2_rgb_(val1, val2, h);
@@ -194,13 +207,13 @@ vec3 hslToRGB(float h, float s, float l) {
 
 void main() 
 {
-  vec2 onePixel = vec2(1) / vec2(textureSize(u_image, 0));
   vec4 mainPixel = texture(u_image, v_texCoord);
   float x = mainPixel.x * 255.0f;
   float y = mainPixel.y * 255.0f;
   float z = mainPixel.z * 255.0f;
-  float w = mainPixel.w * 255.0f;
+  float w = mainPixel.w;
 
+  // invert
   if (u_invert == 1.0f) 
   {
     x = 255.0f - x;
@@ -260,13 +273,15 @@ void main()
 
   // noise
   {
-    float ran = (0.5f - g_random(v_texCoord + vec2(3.14f, 3.14f))) * u_noise;
+    float randAdd = 2.0f + 1.8f * u_rand;
+    float ran = (0.5f - g_random(v_texCoord + vec2(randAdd, randAdd))) * u_noise;
 
     x = x + ran;
     y = y + ran;
     z = z + ran;
   }
 
+  // sepia
   if (u_sepia == 1.0f) 
   {
     float red = x;
@@ -278,6 +293,7 @@ void main()
     z = (0.272f * red) + (0.534f * green) + (0.131f * blue);
   }
 
+  // grayscale
   if (u_grayscale == 1.0f) 
   {
     x = y = z = ((x + y + z) / 3.0f);

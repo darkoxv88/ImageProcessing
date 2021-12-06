@@ -1,13 +1,13 @@
-const gl1: boolean = !!WebGLRenderingContext;
+const forceGL1: boolean = false;
 
+const gl1: boolean = !!WebGLRenderingContext;
 export function verifyWebGl1(): boolean {
   return gl1;
 }
 
 const gl2: boolean = !!WebGL2RenderingContext;
-
 export function verifyWebGl2(): boolean {
-  return gl2;
+  return (gl2 && !forceGL1);
 }
 
 export function createCanvas(): HTMLCanvasElement {
@@ -17,12 +17,24 @@ export function createCanvas(): HTMLCanvasElement {
   return canvas;
 }
 
+export function createWebgl1(canvas?: HTMLCanvasElement): WebGLRenderingContext {
+  if (verifyWebGl1() == false) return null;
+
+  if (!canvas) canvas = createCanvas();
+
+  let gl: WebGLRenderingContext = canvas.getContext('webgl', { preserveDrawingBuffer: false });
+
+  if (!gl) throw new Error('Could not get context, there was an unknown error.');
+
+  return gl;
+}
+
 export function createWebgl2(canvas?: HTMLCanvasElement): WebGL2RenderingContext {
   if (verifyWebGl2() == false) return null;
 
   if (!canvas) canvas = createCanvas();
 
-  let gl: WebGL2RenderingContext = canvas.getContext('webgl2');
+  let gl: WebGL2RenderingContext = canvas.getContext('webgl2', { preserveDrawingBuffer: false });
 
   if (!gl) throw new Error('Could not get context, there was an unknown error.');
 

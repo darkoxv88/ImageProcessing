@@ -1,6 +1,6 @@
 /**
   * 
-  * @author Darko Petrovic
+	* @author Darko Petrovic
   * @Link Facebook: https://www.facebook.com/WitchkingOfAngmarr
   * @Link GitHub: https://github.com/darkoxv88
   * 
@@ -32,7 +32,7 @@ backup:
   window.___webpack_export_dp_ImageProcessing___.definition
 
 **/
-    
+
 /******/ (() => { // webpackBootstrap
 /******/ 	"use strict";
 var __webpack_exports__ = {};
@@ -52,9 +52,6 @@ function isProduction() {
 ;// CONCATENATED MODULE: ./src/helpers/canvas-2d-ctx.ts
 class Canvas2dCtx {
     constructor() {
-    }
-    get name() {
-        return this._name;
     }
     get size() {
         return this._size;
@@ -83,7 +80,6 @@ class Canvas2dCtx {
     }
     destructor() {
         this.img = null;
-        this._name = undefined;
         this._size = undefined;
         this._type = undefined;
         this.org = null;
@@ -116,7 +112,6 @@ class Canvas2dCtx {
                     image.onload = () => {
                         var _a, _b;
                         this.img = image;
-                        this._name = file === null || file === void 0 ? void 0 : file.name;
                         this._size = file === null || file === void 0 ? void 0 : file.size;
                         this._type = file === null || file === void 0 ? void 0 : file.type;
                         let ctx = this.generate2dCtx((_a = this.img) === null || _a === void 0 ? void 0 : _a.width, (_b = this.img) === null || _b === void 0 ? void 0 : _b.height);
@@ -166,25 +161,36 @@ class Canvas2dCtx {
 }
 
 ;// CONCATENATED MODULE: ./src/utility/webgl.ts
+const forceGL1 = false;
 const gl1 = !!WebGLRenderingContext;
 function verifyWebGl1() {
     return gl1;
 }
 const gl2 = !!WebGL2RenderingContext;
 function verifyWebGl2() {
-    return gl2;
+    return (gl2 && !forceGL1);
 }
 function createCanvas() {
     let canvas = document.createElement('canvas');
     canvas.innerHTML = 'This browser does not support HTML5';
     return canvas;
 }
+function createWebgl1(canvas) {
+    if (verifyWebGl1() == false)
+        return null;
+    if (!canvas)
+        canvas = createCanvas();
+    let gl = canvas.getContext('webgl', { preserveDrawingBuffer: false });
+    if (!gl)
+        throw new Error('Could not get context, there was an unknown error.');
+    return gl;
+}
 function createWebgl2(canvas) {
     if (verifyWebGl2() == false)
         return null;
     if (!canvas)
         canvas = createCanvas();
-    let gl = canvas.getContext('webgl2');
+    let gl = canvas.getContext('webgl2', { preserveDrawingBuffer: false });
     if (!gl)
         throw new Error('Could not get context, there was an unknown error.');
     return gl;
@@ -332,11 +338,17 @@ function colorTemperatureToRgb(value) {
     return [r, g, b];
 }
 
-;// CONCATENATED MODULE: ./src/core/shaders/verts/image-processing.vert
-/* harmony default export */ const image_processing = ("#version 300 es\r\n\r\nin vec2 a_position;\r\nin vec2 a_texCoord;\r\n\r\nuniform vec2 u_resolution;\r\n\r\nout vec2 v_texCoord;\r\n\r\nvoid main() {\r\n  vec2 zeroToOne = a_position / u_resolution;\r\n\r\n  vec2 zeroToTwo = zeroToOne * 2.0;\r\n\r\n  vec2 clipSpace = zeroToTwo - 1.0;\r\n\r\n  gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);\r\n\r\n  v_texCoord = a_texCoord;\r\n}\r\n");
-;// CONCATENATED MODULE: ./src/core/shaders/frags/image-processing.frag
-/* harmony default export */ const frags_image_processing = ("#version 300 es\r\nprecision highp float;\r\n\r\nfloat g_goldNoise(float v, float seed) \r\n{\r\n  return fract(tan(distance(v * 1.61803398874989484820459f, v) * seed) * v);\r\n}\r\nfloat g_goldNoise(vec2 v, float seed) \r\n{\r\n  return fract(tan(distance(v * 1.61803398874989484820459f, v) * seed) * v.x);\r\n}\r\nfloat g_goldNoise(vec3 v, float seed) \r\n{\r\n  return fract(tan(distance(v * 1.61803398874989484820459f, v) * seed) * v.x);\r\n}\r\nfloat g_goldNoise(vec4 v, float seed) \r\n{\r\n  return fract(tan(distance(v * 1.61803398874989484820459f, v) * seed) * v.x);\r\n}\r\nuint g_hash(uint x) \r\n{\r\n  x += (x << 10u);\r\n  x ^= (x >>  6u);\r\n  x += (x <<  3u);\r\n  x ^= (x >> 11u);\r\n  x += (x << 15u);\r\n  return x;\r\n}\r\nuint g_hash(uvec2 v) \r\n{ \r\n  return g_hash( v.x ^ g_hash(v.y)); \r\n}\r\nuint g_hash(uvec3 v) \r\n{ \r\n  return g_hash( v.x ^ g_hash(v.y) ^ g_hash(v.z)); \r\n}\r\nuint g_hash(uvec4 v) \r\n{ \r\n  return g_hash( v.x ^ g_hash(v.y) ^ g_hash(v.z) ^ g_hash(v.w) );\r\n}\r\nfloat g_floatConstruct(uint m) \r\n{\r\n  const uint ieeeMantissa = 0x007FFFFFu;\r\n  const uint ieeeOne = 0x3F800000u; \r\n\r\n  m &= ieeeMantissa;                     \r\n  m |= ieeeOne;                          \r\n\r\n  float f = uintBitsToFloat( m );   \r\n\r\n  return f - 1.0;                       \r\n}\r\nfloat g_random(float v) \r\n{ \r\n  return g_goldNoise(v, g_floatConstruct(g_hash(floatBitsToUint(v))));\r\n}\r\nfloat g_random(vec2  v) \r\n{ \r\n  return g_goldNoise(v, g_floatConstruct(g_hash(floatBitsToUint(v))));\r\n}\r\nfloat g_random(vec3  v) \r\n{ \r\n  return g_goldNoise(v, g_floatConstruct(g_hash(floatBitsToUint(v))));\r\n}\r\nfloat g_random(vec4  v) \r\n{ \r\n  return g_goldNoise(v, g_floatConstruct(g_hash(floatBitsToUint(v))));\r\n}\r\n\r\nuniform float u_invert;\r\nuniform vec3 u_hsl;\r\nuniform float u_gamma;\r\nuniform float u_noise;\r\nuniform float u_sepia;\r\nuniform float u_grayscale;\r\nuniform vec3 u_temperature;\r\nuniform float u_transparency;\r\n\r\nuniform sampler2D u_image;\r\nin vec2 v_texCoord;\r\nout vec4 outColor;\r\n\r\nvec3 rgbToHSL(float cR, float cG, float cB) \r\n{\r\n  float r = cR / 255.0f;\r\n  float g = cG / 255.0f;\r\n  float b = cB / 255.0f;\r\n\r\n  float max = max(max(r, g), b); \r\n  float min = min(min(r, g), b);\r\n  float del = max - min;\r\n\r\n  float h = 0.0f; \r\n  float s = 0.0f; \r\n  float l = (max + min) / 2.0f;\r\n\r\n  if (max == min) \r\n  {\r\n    return vec3(h, s, l);\r\n  }\r\n\r\n  if (l < 0.5f)  \r\n  {\r\n    s = del / ( max + min );\r\n  }\r\n  else  \r\n  {\r\n    s = del / ( 2.0f - max - min ); \r\n  }\r\n\r\n  float delR = ( ( ( max - r ) / 6.0f ) + ( del / 2.0f ) ) / del;\r\n  float delG = ( ( ( max - g ) / 6.0f ) + ( del / 2.0f ) ) / del;\r\n  float delB = ( ( ( max - b ) / 6.0f ) + ( del / 2.0f ) ) / del;\r\n\r\n  if (r == max) \r\n  {\r\n    h = delB - delG;\r\n  }\r\n  else if (g == max) \r\n  {\r\n    h = ( 1.0f / 3.0f ) + delR - delB;\r\n  }\r\n  else if (b == max) \r\n  {\r\n    h = ( 2.0f / 3.0f ) + delG - delR;\r\n  }\r\n\r\n  if (h < 0.0f) \r\n  {\r\n    h += 1.0f;\r\n  }\r\n\r\n  if (h > 1.0f) \r\n  {\r\n    h -= 1.0;\r\n  }\r\n\r\n  return vec3(h, s, l);\r\n}\r\n\r\nfloat _hue_2_rgb_(float v1, float v2, float vH) {\r\n  if (vH < 0.0) \r\n  {\r\n    vH += 1.0;\r\n  }\r\n\r\n  if (vH > 1.0) \r\n  {\r\n    vH -= 1.0;\r\n  }\r\n\r\n  if ((6.0f * vH) < 1.0f) return (v1 + (v2 - v1) * 6.0f * vH);\r\n  if ((2.0f * vH) < 1.0f) return v2;\r\n  if ((3.0f * vH) < 2.0f) return (v1 + (v2 - v1) * ((2.0f / 3.0f) - vH) * 6.0f);\r\n\r\n  return v1;\r\n}\r\n\r\nvec3 hslToRGB(float h, float s, float l) {\r\n  float r = 0.0f;\r\n  float g = 0.0f;\r\n  float b = 0.0f;\r\n  float val1 = 0.0f;\r\n  float val2 = 0.0f;\r\n\r\n  if (s == 0.0f)\r\n  {\r\n    r = l * 255.0f;\r\n    g = l * 255.0f;\r\n    b = l * 255.0f;\r\n\r\n    return vec3(r, g, b);\r\n  }\r\n\r\n  if (l < 0.5) \r\n  {\r\n    val2 = l * (1.0f + s);\r\n  }\r\n  else\r\n  {\r\n    val2 = (l + s) - (l * s);\r\n  }\r\n      \r\n  val1 = 2.0 * l - val2;\r\n\r\n  r = 255.0f * _hue_2_rgb_(val1, val2, h + (1.0f / 3.0f));\r\n  g = 255.0f * _hue_2_rgb_(val1, val2, h);\r\n  b = 255.0f * _hue_2_rgb_(val1, val2, h - (1.0f / 3.0f));\r\n\r\n  return vec3(r, g, b);\r\n}\r\n\r\n\r\n\r\nvoid main() \r\n{\r\n  vec2 onePixel = vec2(1) / vec2(textureSize(u_image, 0));\r\n  vec4 mainPixel = texture(u_image, v_texCoord);\r\n  float x = mainPixel.x * 255.0f;\r\n  float y = mainPixel.y * 255.0f;\r\n  float z = mainPixel.z * 255.0f;\r\n  float w = mainPixel.w * 255.0f;\r\n\r\n  if (u_invert == 1.0f) \r\n  {\r\n    x = 255.0f - x;\r\n    y = 255.0f - y;\r\n    z = 255.0f - z;\r\n  }\r\n\r\n  // hsl\r\n  {\r\n    float sVal = u_hsl.y;\r\n    float saturationAdd = 0.0f;\r\n\r\n    if (sVal < 0.0f) \r\n    {\r\n      sVal = (100.0f + sVal) / 100.0f;\r\n      sVal *= sVal;\r\n    } \r\n    else \r\n    {\r\n      sVal = sVal / 100.0f;\r\n    }\r\n    \r\n    if (u_hsl.y > 0.0f) \r\n    {\r\n      saturationAdd = sVal;\r\n    }\r\n\r\n    vec3 _hsl = rgbToHSL(x, y, z);\r\n    vec3 _rgb = hslToRGB(_hsl.x + u_hsl.x, _hsl.y + saturationAdd, _hsl.z);\r\n\r\n    x = _rgb.x;\r\n    y = _rgb.y;\r\n    z = _rgb.z;\r\n\r\n    if (u_hsl.y < 0.0f) \r\n    {\r\n      float luR = 0.3086;\r\n      float luG = 0.6094;\r\n      float luB = 0.0820;\r\n\r\n      x = ( ((1.0f - sVal) * luR + sVal) * x + ((1.0f - sVal) * luG) * y + ((1.0f - sVal) * luB) * z );\r\n      y = ( ((1.0f - sVal) * luR) * x + ((1.0f - sVal) * luG + sVal) * x + ((1.0f - sVal) * luB) * z );\r\n      z = ( ((1.0f - sVal) * luR) * x + ((1.0f - sVal) * luG) * y + ((1.0f - sVal) * luB + sVal) * z );\r\n    }\r\n\r\n    x = x + u_hsl.z;\r\n    y = y + u_hsl.z;\r\n    z = z + u_hsl.z;\r\n  }\r\n\r\n  // gamma\r\n  {\r\n    x = 255.0f * pow((x / 255.0f), u_gamma);\r\n    y = 255.0f * pow((y / 255.0f), u_gamma);\r\n    z = 255.0f * pow((z / 255.0f), u_gamma);\r\n  }\r\n\r\n  // noise\r\n  {\r\n    float ran = (0.5f - g_random(v_texCoord + vec2(3.14f, 3.14f))) * u_noise;\r\n\r\n    x = x + ran;\r\n    y = y + ran;\r\n    z = z + ran;\r\n  }\r\n\r\n  if (u_sepia == 1.0f) \r\n  {\r\n    float red = x;\r\n    float green = y;\r\n    float blue = z;\r\n\r\n    x = (0.393f * red) + (0.769f * green) + (0.189f * blue);\r\n    y = (0.349f * red) + (0.686f * green) + (0.168f * blue);\r\n    z = (0.272f * red) + (0.534f * green) + (0.131f * blue);\r\n  }\r\n\r\n  if (u_grayscale == 1.0f) \r\n  {\r\n    x = y = z = ((x + y + z) / 3.0f);\r\n  }\r\n\r\n  x = x * u_temperature.x;\r\n  y = y * u_temperature.y;\r\n  z = z * u_temperature.z;\r\n  w = w * u_transparency;\r\n\r\n  outColor = vec4(x / 255.0f, y / 255.0f, z / 255.0f, w).rgba;\r\n}\r\n");
+;// CONCATENATED MODULE: ./src/core/shaders/verts/image-processing-gl2.vert
+/* harmony default export */ const image_processing_gl2 = ("#version 300 es\r\n\r\nin vec2 a_position;\r\nin vec2 a_texCoord;\r\n\r\nuniform vec2 u_resolution;\r\nuniform float u_flipVertical;\r\nuniform float u_flipHorizontal;\r\n\r\nout vec2 v_texCoord;\r\n\r\nvoid main() {\r\n  vec2 zeroToOne = a_position / u_resolution;\r\n  vec2 zeroToTwo = zeroToOne * 2.0;\r\n  vec2 clipSpace = zeroToTwo - 1.0;\r\n  gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);\r\n  vec2 texCoord = vec2(a_texCoord.x, a_texCoord.y);\r\n\r\n  if (u_flipVertical == 1.0f)\r\n  {\r\n    texCoord.x = 1.0f - texCoord.x;\r\n  }\r\n\r\n  if (u_flipHorizontal == 1.0f)\r\n  {\r\n    texCoord.y = 1.0f - texCoord.y;\r\n  }\r\n\r\n  v_texCoord = texCoord;\r\n}\r\n");
+;// CONCATENATED MODULE: ./src/core/shaders/frags/image-processing-gl2.frag
+/* harmony default export */ const frags_image_processing_gl2 = ("#version 300 es\r\nprecision highp float;\r\n\r\nfloat g_goldNoise(float v, float seed) \r\n{\r\n  return fract(tan(distance(v * 1.61803398874989484820459f, v) * seed) * v);\r\n}\r\nfloat g_goldNoise(vec2 v, float seed) \r\n{\r\n  return fract(tan(distance(v * 1.61803398874989484820459f, v) * seed) * v.x);\r\n}\r\nfloat g_goldNoise(vec3 v, float seed) \r\n{\r\n  return fract(tan(distance(v * 1.61803398874989484820459f, v) * seed) * v.x);\r\n}\r\nfloat g_goldNoise(vec4 v, float seed) \r\n{\r\n  return fract(tan(distance(v * 1.61803398874989484820459f, v) * seed) * v.x);\r\n}\r\nuint g_hash(uint x) \r\n{\r\n  x += (x << 10u);\r\n  x ^= (x >>  6u);\r\n  x += (x <<  3u);\r\n  x ^= (x >> 11u);\r\n  x += (x << 15u);\r\n  return x;\r\n}\r\nuint g_hash(uvec2 v) \r\n{ \r\n  return g_hash( v.x ^ g_hash(v.y)); \r\n}\r\nuint g_hash(uvec3 v) \r\n{ \r\n  return g_hash( v.x ^ g_hash(v.y) ^ g_hash(v.z)); \r\n}\r\nuint g_hash(uvec4 v) \r\n{ \r\n  return g_hash( v.x ^ g_hash(v.y) ^ g_hash(v.z) ^ g_hash(v.w) );\r\n}\r\nfloat g_floatConstruct(uint m) \r\n{\r\n  const uint ieeeMantissa = 0x007FFFFFu;\r\n  const uint ieeeOne = 0x3F800000u; \r\n\r\n  m &= ieeeMantissa;                     \r\n  m |= ieeeOne;                          \r\n\r\n  float f = uintBitsToFloat( m );   \r\n\r\n  return f - 1.0;                       \r\n}\r\nfloat g_random(float v) \r\n{ \r\n  return g_goldNoise(v, g_floatConstruct(g_hash(floatBitsToUint(v))));\r\n}\r\nfloat g_random(vec2  v) \r\n{ \r\n  return g_goldNoise(v, g_floatConstruct(g_hash(floatBitsToUint(v))));\r\n}\r\nfloat g_random(vec3  v) \r\n{ \r\n  return g_goldNoise(v, g_floatConstruct(g_hash(floatBitsToUint(v))));\r\n}\r\nfloat g_random(vec4  v) \r\n{ \r\n  return g_goldNoise(v, g_floatConstruct(g_hash(floatBitsToUint(v))));\r\n}\r\n\r\nuniform float u_rand;\r\nuniform sampler2D u_image;\r\n\r\nuniform float u_invert;\r\nuniform vec3 u_hsl;\r\nuniform float u_gamma;\r\nuniform float u_noise;\r\nuniform float u_sepia;\r\nuniform float u_grayscale;\r\nuniform vec3 u_temperature;\r\nuniform float u_transparency;\r\n\r\nin vec2 v_texCoord;\r\nout vec4 outColor;\r\n\r\nvec3 rgbToHSL(float cR, float cG, float cB) \r\n{\r\n  float r = cR / 255.0f;\r\n  float g = cG / 255.0f;\r\n  float b = cB / 255.0f;\r\n\r\n  float max = max(max(r, g), b); \r\n  float min = min(min(r, g), b);\r\n  float del = max - min;\r\n\r\n  float h = 0.0f; \r\n  float s = 0.0f; \r\n  float l = (max + min) / 2.0f;\r\n\r\n  if (max == min) \r\n  {\r\n    return vec3(h, s, l);\r\n  }\r\n\r\n  if (l < 0.5f)  \r\n  {\r\n    s = del / (max + min);\r\n  }\r\n  else  \r\n  {\r\n    s = del / (2.0f - max - min); \r\n  }\r\n\r\n  float delR = ( ( ( max - r ) / 6.0f ) + ( del / 2.0f ) ) / del;\r\n  float delG = ( ( ( max - g ) / 6.0f ) + ( del / 2.0f ) ) / del;\r\n  float delB = ( ( ( max - b ) / 6.0f ) + ( del / 2.0f ) ) / del;\r\n\r\n  if (r == max) \r\n  {\r\n    h = delB - delG;\r\n  }\r\n  else if (g == max) \r\n  {\r\n    h = (1.0f / 3.0f) + delR - delB;\r\n  }\r\n  else if (b == max) \r\n  {\r\n    h = (2.0f / 3.0f) + delG - delR;\r\n  }\r\n\r\n  if (h < 0.0f) \r\n  {\r\n    h += 1.0f;\r\n  }\r\n\r\n  if (h > 1.0f) \r\n  {\r\n    h -= 1.0f;\r\n  }\r\n\r\n  return vec3(h, s, l);\r\n}\r\n\r\nfloat _hue_2_rgb_(float v1, float v2, float vH) \r\n{\r\n  if (vH < 0.0f) \r\n  {\r\n    vH += 1.0f;\r\n  }\r\n\r\n  if (vH > 1.0f) \r\n  {\r\n    vH -= 1.0f;\r\n  }\r\n\r\n  if ((6.0f * vH) < 1.0f) \r\n  {\r\n    return (v1 + (v2 - v1) * 6.0f * vH);\r\n  }\r\n  if ((2.0f * vH) < 1.0f)\r\n  {\r\n    return v2;\r\n  }\r\n  if ((3.0f * vH) < 2.0f)\r\n  {\r\n    return (v1 + (v2 - v1) * ((2.0f / 3.0f) - vH) * 6.0f);\r\n  }\r\n\r\n  return v1;\r\n}\r\n\r\nvec3 hslToRGB(float h, float s, float l) \r\n{\r\n  float r = 0.0f;\r\n  float g = 0.0f;\r\n  float b = 0.0f;\r\n  float val1 = 0.0f;\r\n  float val2 = 0.0f;\r\n\r\n  if (s == 0.0f)\r\n  {\r\n    r = l * 255.0f;\r\n    g = l * 255.0f;\r\n    b = l * 255.0f;\r\n\r\n    return vec3(r, g, b);\r\n  }\r\n\r\n  if (l < 0.5f) \r\n  {\r\n    val2 = l * (1.0f + s);\r\n  }\r\n  else\r\n  {\r\n    val2 = (l + s) - (l * s);\r\n  }\r\n      \r\n  val1 = 2.0f * l - val2;\r\n\r\n  r = 255.0f * _hue_2_rgb_(val1, val2, h + (1.0f / 3.0f));\r\n  g = 255.0f * _hue_2_rgb_(val1, val2, h);\r\n  b = 255.0f * _hue_2_rgb_(val1, val2, h - (1.0f / 3.0f));\r\n\r\n  return vec3(r, g, b);\r\n}\r\n\r\n\r\n\r\nvoid main() \r\n{\r\n  vec4 mainPixel = texture(u_image, v_texCoord);\r\n  float x = mainPixel.x * 255.0f;\r\n  float y = mainPixel.y * 255.0f;\r\n  float z = mainPixel.z * 255.0f;\r\n  float w = mainPixel.w;\r\n\r\n  // invert\r\n  if (u_invert == 1.0f) \r\n  {\r\n    x = 255.0f - x;\r\n    y = 255.0f - y;\r\n    z = 255.0f - z;\r\n  }\r\n\r\n  // hsl\r\n  {\r\n    float sVal = u_hsl.y;\r\n    float saturationAdd = 0.0f;\r\n\r\n    if (sVal < 0.0f) \r\n    {\r\n      sVal = (100.0f + sVal) / 100.0f;\r\n      sVal *= sVal;\r\n    } \r\n    else \r\n    {\r\n      sVal = sVal / 100.0f;\r\n    }\r\n    \r\n    if (u_hsl.y > 0.0f) \r\n    {\r\n      saturationAdd = sVal;\r\n    }\r\n\r\n    vec3 _hsl = rgbToHSL(x, y, z);\r\n    vec3 _rgb = hslToRGB(_hsl.x + u_hsl.x, _hsl.y + saturationAdd, _hsl.z);\r\n\r\n    x = _rgb.x;\r\n    y = _rgb.y;\r\n    z = _rgb.z;\r\n\r\n    if (u_hsl.y < 0.0f) \r\n    {\r\n      float luR = 0.3086;\r\n      float luG = 0.6094;\r\n      float luB = 0.0820;\r\n\r\n      x = ( ((1.0f - sVal) * luR + sVal) * x + ((1.0f - sVal) * luG) * y + ((1.0f - sVal) * luB) * z );\r\n      y = ( ((1.0f - sVal) * luR) * x + ((1.0f - sVal) * luG + sVal) * x + ((1.0f - sVal) * luB) * z );\r\n      z = ( ((1.0f - sVal) * luR) * x + ((1.0f - sVal) * luG) * y + ((1.0f - sVal) * luB + sVal) * z );\r\n    }\r\n\r\n    x = x + u_hsl.z;\r\n    y = y + u_hsl.z;\r\n    z = z + u_hsl.z;\r\n  }\r\n\r\n  // gamma\r\n  {\r\n    x = 255.0f * pow((x / 255.0f), u_gamma);\r\n    y = 255.0f * pow((y / 255.0f), u_gamma);\r\n    z = 255.0f * pow((z / 255.0f), u_gamma);\r\n  }\r\n\r\n  // noise\r\n  {\r\n    float randAdd = 2.0f + 1.8f * u_rand;\r\n    float ran = (0.5f - g_random(v_texCoord + vec2(randAdd, randAdd))) * u_noise;\r\n\r\n    x = x + ran;\r\n    y = y + ran;\r\n    z = z + ran;\r\n  }\r\n\r\n  // sepia\r\n  if (u_sepia == 1.0f) \r\n  {\r\n    float red = x;\r\n    float green = y;\r\n    float blue = z;\r\n\r\n    x = (0.393f * red) + (0.769f * green) + (0.189f * blue);\r\n    y = (0.349f * red) + (0.686f * green) + (0.168f * blue);\r\n    z = (0.272f * red) + (0.534f * green) + (0.131f * blue);\r\n  }\r\n\r\n  // grayscale\r\n  if (u_grayscale == 1.0f) \r\n  {\r\n    x = y = z = ((x + y + z) / 3.0f);\r\n  }\r\n\r\n  x = x * u_temperature.x;\r\n  y = y * u_temperature.y;\r\n  z = z * u_temperature.z;\r\n  w = w * u_transparency;\r\n\r\n  outColor = vec4(x / 255.0f, y / 255.0f, z / 255.0f, w).rgba;\r\n}\r\n");
+;// CONCATENATED MODULE: ./src/core/shaders/verts/image-processing-gl1.vert
+/* harmony default export */ const image_processing_gl1 = ("attribute vec2 a_position;\r\nattribute vec2 a_texCoord;\r\n\r\nuniform vec2 u_resolution;\r\nuniform float u_flipVertical;\r\nuniform float u_flipHorizontal;\r\n\r\nvarying vec2 v_texCoord;\r\n\r\nvoid main() {\r\n  vec2 zeroToOne = a_position / u_resolution;\r\n  vec2 zeroToTwo = zeroToOne * 2.0;\r\n  vec2 clipSpace = zeroToTwo - 1.0;\r\n  gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);\r\n  vec2 texCoord = vec2(a_texCoord.x, a_texCoord.y);\r\n\r\n  if (u_flipVertical == 1.0)\r\n  {\r\n    texCoord.x = 1.0 - texCoord.x;\r\n  }\r\n\r\n  if (u_flipHorizontal == 1.0)\r\n  {\r\n    texCoord.y = 1.0 - texCoord.y;\r\n  }\r\n\r\n  v_texCoord = texCoord;\r\n}\r\n");
+;// CONCATENATED MODULE: ./src/core/shaders/frags/image-processing-gl1.frag
+/* harmony default export */ const frags_image_processing_gl1 = ("precision highp float;\r\n\r\nfloat g_goldNoise(float v, float seed) \r\n{\r\n  return fract(tan(distance(v * 1.61803398874989484820459, v) * seed) * v);\r\n}\r\nfloat g_goldNoise(vec2 v, float seed) \r\n{\r\n  return fract(tan(distance(v * 1.61803398874989484820459, v) * seed) * v.x);\r\n}\r\nfloat g_goldNoise(vec3 v, float seed) \r\n{\r\n  return fract(tan(distance(v * 1.61803398874989484820459, v) * seed) * v.x);\r\n}\r\nfloat g_goldNoise(vec4 v, float seed) \r\n{\r\n  return fract(tan(distance(v * 1.61803398874989484820459, v) * seed) * v.x);\r\n}\r\n\r\nuniform float u_rand;\r\nuniform sampler2D u_image;\r\n\r\nuniform float u_invert;\r\nuniform vec3 u_hsl;\r\nuniform float u_gamma;\r\nuniform float u_noise;\r\nuniform float u_sepia;\r\nuniform float u_grayscale;\r\nuniform vec3 u_temperature;\r\nuniform float u_transparency;\r\n\r\nvarying vec2 v_texCoord;\r\n\r\nvec3 rgbToHSL(float cR, float cG, float cB) \r\n{\r\n  float r = cR / 255.0;\r\n  float g = cG / 255.0;\r\n  float b = cB / 255.0;\r\n\r\n  float max = max(max(r, g), b); \r\n  float min = min(min(r, g), b);\r\n  float del = max - min;\r\n\r\n  float h = 0.0; \r\n  float s = 0.0; \r\n  float l = (max + min) / 2.0;\r\n\r\n  if (max == min) \r\n  {\r\n    return vec3(h, s, l);\r\n  }\r\n\r\n  if (l < 0.5)  \r\n  {\r\n    s = del / (max + min);\r\n  }\r\n  else  \r\n  {\r\n    s = del / (2.0 - max - min); \r\n  }\r\n\r\n  float delR = ( ( ( max - r ) / 6.0 ) + ( del / 2.0 ) ) / del;\r\n  float delG = ( ( ( max - g ) / 6.0 ) + ( del / 2.0 ) ) / del;\r\n  float delB = ( ( ( max - b ) / 6.0 ) + ( del / 2.0 ) ) / del;\r\n\r\n  if (r == max) \r\n  {\r\n    h = delB - delG;\r\n  }\r\n  else if (g == max) \r\n  {\r\n    h = (1.0 / 3.0) + delR - delB;\r\n  }\r\n  else if (b == max) \r\n  {\r\n    h = (2.0 / 3.0) + delG - delR;\r\n  }\r\n\r\n  if (h < 0.0) \r\n  {\r\n    h += 1.0;\r\n  }\r\n\r\n  if (h > 1.0) \r\n  {\r\n    h -= 1.0;\r\n  }\r\n\r\n  return vec3(h, s, l);\r\n}\r\n\r\nfloat _hue_2_rgb_(float v1, float v2, float vH) \r\n{\r\n  if (vH < 0.0) \r\n  {\r\n    vH += 1.0;\r\n  }\r\n\r\n  if (vH > 1.0) \r\n  {\r\n    vH -= 1.0;\r\n  }\r\n\r\n  if ((6.0 * vH) < 1.0)\r\n  {\r\n    return (v1 + (v2 - v1) * 6.0 * vH);\r\n  }\r\n  if ((2.0 * vH) < 1.0)\r\n  {\r\n    return v2;\r\n  }\r\n  if ((3.0 * vH) < 2.0)\r\n  {\r\n    return (v1 + (v2 - v1) * ((2.0 / 3.0) - vH) * 6.0);\r\n  }\r\n\r\n  return v1;\r\n}\r\n\r\nvec3 hslToRGB(float h, float s, float l) {\r\n  float r = 0.0;\r\n  float g = 0.0;\r\n  float b = 0.0;\r\n  float val1 = 0.0;\r\n  float val2 = 0.0;\r\n\r\n  if (s == 0.0)\r\n  {\r\n    r = l * 255.0;\r\n    g = l * 255.0;\r\n    b = l * 255.0;\r\n\r\n    return vec3(r, g, b);\r\n  }\r\n\r\n  if (l < 0.5) \r\n  {\r\n    val2 = l * (1.0 + s);\r\n  }\r\n  else\r\n  {\r\n    val2 = (l + s) - (l * s);\r\n  }\r\n      \r\n  val1 = 2.0 * l - val2;\r\n\r\n  r = 255.0 * _hue_2_rgb_(val1, val2, h + (1.0 / 3.0));\r\n  g = 255.0 * _hue_2_rgb_(val1, val2, h);\r\n  b = 255.0 * _hue_2_rgb_(val1, val2, h - (1.0 / 3.0));\r\n\r\n  return vec3(r, g, b);\r\n}\r\n\r\n\r\n\r\nvoid main() {\r\n  vec4 mainPixel = texture2D(u_image, v_texCoord);\r\n  float x = mainPixel.x * 255.0;\r\n  float y = mainPixel.y * 255.0;\r\n  float z = mainPixel.z * 255.0;\r\n  float w = mainPixel.w;\r\n\r\n  // invert\r\n  if (u_invert == 1.0) \r\n  {\r\n    x = 255.0 - x;\r\n    y = 255.0 - y;\r\n    z = 255.0 - z;\r\n  }\r\n\r\n  // hsl\r\n  {\r\n    float sVal = u_hsl.y;\r\n    float saturationAdd = 0.0;\r\n\r\n    if (sVal < 0.0) \r\n    {\r\n      sVal = (100.0 + sVal) / 100.0;\r\n      sVal *= sVal;\r\n    } \r\n    else \r\n    {\r\n      sVal = sVal / 100.0;\r\n    }\r\n    \r\n    if (u_hsl.y > 0.0) \r\n    {\r\n      saturationAdd = sVal;\r\n    }\r\n\r\n    vec3 _hsl = rgbToHSL(x, y, z);\r\n    vec3 _rgb = hslToRGB(_hsl.x + u_hsl.x, _hsl.y + saturationAdd, _hsl.z);\r\n\r\n    x = _rgb.x;\r\n    y = _rgb.y;\r\n    z = _rgb.z;\r\n\r\n    if (u_hsl.y < 0.0) \r\n    {\r\n      float luR = 0.3086;\r\n      float luG = 0.6094;\r\n      float luB = 0.0820;\r\n\r\n      x = ( ((1.0 - sVal) * luR + sVal) * x + ((1.0 - sVal) * luG) * y + ((1.0 - sVal) * luB) * z );\r\n      y = ( ((1.0 - sVal) * luR) * x + ((1.0 - sVal) * luG + sVal) * x + ((1.0 - sVal) * luB) * z );\r\n      z = ( ((1.0 - sVal) * luR) * x + ((1.0 - sVal) * luG) * y + ((1.0 - sVal) * luB + sVal) * z );\r\n    }\r\n\r\n    x = x + u_hsl.z;\r\n    y = y + u_hsl.z;\r\n    z = z + u_hsl.z;\r\n  }\r\n\r\n  // gamma\r\n  {\r\n    x = 255.0 * pow((x / 255.0), u_gamma);\r\n    y = 255.0 * pow((y / 255.0), u_gamma);\r\n    z = 255.0 * pow((z / 255.0), u_gamma);\r\n  }\r\n\r\n  // noise\r\n  {\r\n    float randAdd = 2.0 + 1.8 * u_rand;\r\n    float ran = 0.0;\r\n\r\n    x = x + ran;\r\n    y = y + ran;\r\n    z = z + ran;\r\n  }\r\n\r\n  // sepia\r\n  if (u_sepia == 1.0) \r\n  {\r\n    float red = x;\r\n    float green = y;\r\n    float blue = z;\r\n\r\n    x = (0.393 * red) + (0.769 * green) + (0.189 * blue);\r\n    y = (0.349 * red) + (0.686 * green) + (0.168 * blue);\r\n    z = (0.272 * red) + (0.534 * green) + (0.131 * blue);\r\n  }\r\n\r\n  // grayscale\r\n  if (u_grayscale == 1.0) \r\n  {\r\n    x = y = z = ((x + y + z) / 3.0);\r\n  }\r\n\r\n  x = x * u_temperature.x;\r\n  y = y * u_temperature.y;\r\n  z = z * u_temperature.z;\r\n  w = w * u_transparency;\r\n\r\n  gl_FragColor = vec4(x / 255.0, y / 255.0, z / 255.0, w).rgba;\r\n}\r\n");
 ;// CONCATENATED MODULE: ./src/core/image-processing.ts
+
+
 
 
 
@@ -346,11 +358,13 @@ class ImageProcessing {
     constructor() {
         this._scaleX = 1;
         this._scaleY = 1;
+        this.flipVertical(false);
+        this.flipHorizontal(false);
         this.invert(false);
         this._hsl = new Array(3);
         this.hsl(0, 0, 0);
         this.gamma(1);
-        this.noise(0);
+        this.noise(0); // ?
         this.sepia(false);
         this.grayscale(false);
         this.temperature(0);
@@ -360,10 +374,12 @@ class ImageProcessing {
         this.renderedImageBase64 = '';
         if (verifyWebGl2()) {
             this.gl = createWebgl2(this.canvas);
-            this.program = createProgram(this.gl, compileShader(this.gl, this.gl.VERTEX_SHADER, image_processing), compileShader(this.gl, this.gl.FRAGMENT_SHADER, frags_image_processing));
+            this.program = createProgram(this.gl, compileShader(this.gl, this.gl.VERTEX_SHADER, image_processing_gl2), compileShader(this.gl, this.gl.FRAGMENT_SHADER, frags_image_processing_gl2));
             return;
         }
         if (verifyWebGl1()) {
+            this.gl = createWebgl1(this.canvas);
+            this.program = createProgram(this.gl, compileShader(this.gl, this.gl.VERTEX_SHADER, image_processing_gl1), compileShader(this.gl, this.gl.FRAGMENT_SHADER, frags_image_processing_gl1));
             return;
         }
     }
@@ -403,6 +419,22 @@ class ImageProcessing {
         this._scaleX = value;
     }
     ;
+    flipVertical(value) {
+        if (!!value) {
+            this._flipVertical = 1;
+        }
+        else {
+            this._flipVertical = 0;
+        }
+    }
+    flipHorizontal(value) {
+        if (!!value) {
+            this._flipHorizontal = 1;
+        }
+        else {
+            this._flipHorizontal = 0;
+        }
+    }
     invert(value) {
         if (!!value) {
             this._invert = 1;
@@ -497,21 +529,25 @@ class ImageProcessing {
         this._temperature = temp;
     }
     transparency(value) {
-        if (typeof (value) !== 'number' || !value) {
+        if (typeof (value) !== 'number') {
             value = 1;
         }
-        value = parseInt(value.toString());
+        value = parseFloat(value.toString());
         if (value > 1) {
             value = 1;
         }
         if (value < 0) {
-            value = 1;
+            value = 0;
         }
         this._transparency = value;
     }
     renderGl2() {
         return new Promise((res, rej) => {
             try {
+                if (!(this.gl instanceof WebGL2RenderingContext)) {
+                    rej(new Error('Rendering contex is not WebGL2RenderingContext!'));
+                    return;
+                }
                 const imgWidth = parseInt((this.ctx.orgWidth * this._scaleX).toFixed(0));
                 const imgHeight = parseInt((this.ctx.orgHeight * this._scaleY).toFixed(0));
                 webglResize(this.gl, this.canvas, imgWidth, imgHeight);
@@ -519,7 +555,11 @@ class ImageProcessing {
                 const positionAttributeLocation = this.gl.getAttribLocation(this.program, 'a_position');
                 const texCoordAttributeLocation = this.gl.getAttribLocation(this.program, 'a_texCoord');
                 const resolutionUniformLocation = this.gl.getUniformLocation(this.program, 'u_resolution');
+                const uniformFlipVertical = this.gl.getUniformLocation(this.program, 'u_flipVertical');
+                const uniformFlipHorizontal = this.gl.getUniformLocation(this.program, 'u_flipHorizontal');
                 // from FRAG
+                const randUniformLocation = this.gl.getUniformLocation(this.program, 'u_rand');
+                const imageUniformLocation = this.gl.getUniformLocation(this.program, 'u_image');
                 const uniformInvert = this.gl.getUniformLocation(this.program, 'u_invert');
                 const uniformGamma = this.gl.getUniformLocation(this.program, 'u_gamma');
                 const uniformHSL = this.gl.getUniformLocation(this.program, 'u_hsl');
@@ -528,7 +568,6 @@ class ImageProcessing {
                 const uniformGrayscale = this.gl.getUniformLocation(this.program, 'u_grayscale');
                 const uniformTemperature = this.gl.getUniformLocation(this.program, 'u_temperature');
                 const uniformTransparency = this.gl.getUniformLocation(this.program, 'u_transparency');
-                const imageUniformLocation = this.gl.getUniformLocation(this.program, 'u_image');
                 const vao = this.gl.createVertexArray();
                 this.gl.bindVertexArray(vao);
                 let positionBuffer = this.gl.createBuffer();
@@ -558,7 +597,10 @@ class ImageProcessing {
                 this.gl.useProgram(this.program);
                 this.gl.bindVertexArray(vao);
                 this.gl.uniform2f(resolutionUniformLocation, imgWidth, imgHeight);
+                this.gl.uniform1f(randUniformLocation, Math.random());
                 this.gl.uniform1i(imageUniformLocation, 0);
+                this.gl.uniform1f(uniformFlipVertical, this._flipVertical);
+                this.gl.uniform1f(uniformFlipHorizontal, this._flipHorizontal);
                 this.gl.uniform1f(uniformInvert, this._invert);
                 this.gl.uniform3fv(uniformHSL, this._hsl);
                 this.gl.uniform1f(uniformGamma, this._gamma);
@@ -578,11 +620,91 @@ class ImageProcessing {
             }
         });
     }
+    renderGl1() {
+        return new Promise((res, rej) => {
+            try {
+                if (!(this.gl instanceof WebGLRenderingContext)) {
+                    rej(new Error('Rendering contex is not WebGLRenderingContext!'));
+                    return;
+                }
+                const imgWidth = parseInt((this.ctx.orgWidth * this._scaleX).toFixed(0));
+                const imgHeight = parseInt((this.ctx.orgHeight * this._scaleY).toFixed(0));
+                webglResize(this.gl, this.canvas, imgWidth, imgHeight);
+                // from VERT
+                const positionAttributeLocation = this.gl.getAttribLocation(this.program, 'a_position');
+                const texCoordAttributeLocation = this.gl.getAttribLocation(this.program, 'a_texCoord');
+                const resolutionUniformLocation = this.gl.getUniformLocation(this.program, 'u_resolution');
+                const uniformFlipVertical = this.gl.getUniformLocation(this.program, 'u_flipVertical');
+                const uniformFlipHorizontal = this.gl.getUniformLocation(this.program, 'u_flipHorizontal');
+                // from FRAG
+                const randUniformLocation = this.gl.getUniformLocation(this.program, 'u_rand');
+                const imageUniformLocation = this.gl.getUniformLocation(this.program, 'u_image');
+                const uniformInvert = this.gl.getUniformLocation(this.program, 'u_invert');
+                const uniformGamma = this.gl.getUniformLocation(this.program, 'u_gamma');
+                const uniformHSL = this.gl.getUniformLocation(this.program, 'u_hsl');
+                const uniformNoise = this.gl.getUniformLocation(this.program, 'u_noise');
+                const uniformSepia = this.gl.getUniformLocation(this.program, 'u_sepia');
+                const uniformGrayscale = this.gl.getUniformLocation(this.program, 'u_grayscale');
+                const uniformTemperature = this.gl.getUniformLocation(this.program, 'u_temperature');
+                const uniformTransparency = this.gl.getUniformLocation(this.program, 'u_transparency');
+                let positionBuffer = this.gl.createBuffer();
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
+                setRectangle(this.gl, 0, 0, imgWidth, imgHeight);
+                let texcoordBuffer = this.gl.createBuffer();
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, texcoordBuffer);
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([
+                    0.0, 0.0,
+                    1.0, 0.0,
+                    0.0, 1.0,
+                    0.0, 1.0,
+                    1.0, 0.0,
+                    1.0, 1.0,
+                ]), this.gl.STATIC_DRAW);
+                let texture = this.gl.createTexture();
+                this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+                this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+                this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+                this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+                this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+                this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.ctx.getOrgImageData());
+                this.gl.useProgram(this.program);
+                this.gl.enableVertexAttribArray(positionAttributeLocation);
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
+                this.gl.vertexAttribPointer(positionAttributeLocation, 2, this.gl.FLOAT, false, 0, 0);
+                this.gl.enableVertexAttribArray(texCoordAttributeLocation);
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, texcoordBuffer);
+                this.gl.vertexAttribPointer(texCoordAttributeLocation, 2, this.gl.FLOAT, false, 0, 0);
+                this.gl.uniform2f(resolutionUniformLocation, imgWidth, imgHeight);
+                this.gl.uniform1f(randUniformLocation, Math.random());
+                this.gl.uniform1i(imageUniformLocation, 0);
+                this.gl.uniform1f(uniformFlipVertical, this._flipVertical);
+                this.gl.uniform1f(uniformFlipHorizontal, this._flipHorizontal);
+                this.gl.uniform1f(uniformFlipVertical, this._flipVertical);
+                this.gl.uniform1f(uniformFlipHorizontal, this._flipHorizontal);
+                this.gl.uniform1f(uniformInvert, this._invert);
+                this.gl.uniform3fv(uniformHSL, this._hsl);
+                this.gl.uniform1f(uniformGamma, this._gamma);
+                this.gl.uniform1f(uniformNoise, this._noise);
+                this.gl.uniform1f(uniformSepia, this._sepia);
+                this.gl.uniform1f(uniformGrayscale, this._grayscale);
+                this.gl.uniform3fv(uniformTemperature, this._temperature);
+                this.gl.uniform1f(uniformTransparency, this._transparency);
+                this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+                this.renderedImageBase64 = this.canvas.toDataURL('image/png');
+                res();
+            }
+            catch (err) {
+                rej(err);
+            }
+        });
+    }
     render() {
+        this.ctx.putActiveImageData(this.ctx.getOrgImageData());
         if (verifyWebGl2()) {
             return this.renderGl2();
         }
         if (verifyWebGl1()) {
+            return this.renderGl1();
         }
     }
     getImage() {
@@ -592,8 +714,36 @@ class ImageProcessing {
 ImageProcessing.Canvas2dCtx = Canvas2dCtx;
 
 ;// CONCATENATED MODULE: ./src/api.ts
+var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+
 
 const Api = ImageProcessing;
+const toTest = false;
+if (toTest) {
+    const test = new Api();
+    getRoot().onload = function () {
+        const img = new Image();
+        const input = document.createElement('input');
+        input.setAttribute('type', 'file');
+        input.onchange = (ev) => __awaiter(this, void 0, void 0, function* () {
+            yield test.loadImage(ev.target.files[0]);
+            yield test.render();
+            img.src = test.getImage();
+        });
+        const div1 = document.createElement('div');
+        div1.append(input);
+        div1.append(img);
+        document.body.appendChild(div1);
+    };
+}
 
 ;// CONCATENATED MODULE: ./src/index.js
 
@@ -622,25 +772,6 @@ catch(err)
 	}
 
 	getRoot()['___webpack_export_dp_' + libName + '___'].definition = Api;
-}
-
-
-// Test
-const test = new Api();
-
-getRoot().onload = function() {
-	const img = new Image();
-	const input = document.createElement('input');
-	input.setAttribute('type', 'file');
-	input.onchange = async (ev) => {
-		await test.loadImage(ev.target.files[0]);
-		await test.render();
-		img.src = test.getImage();
-	}
-	const div1 = document.createElement('div');
-	div1.append(input);
-	div1.append(img);
-	document.body.appendChild(div1);
 }
 
 /******/ })()

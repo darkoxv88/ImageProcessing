@@ -3,6 +3,7 @@ import {
   verifyWebGl1, 
   verifyWebGl2, 
   createCanvas, 
+  createWebgl1,
   createWebgl2, 
   compileShader, 
   createProgram, 
@@ -12,8 +13,11 @@ import {
 
 import { colorTemperatureToRgb } from "../helpers/color-temperature";
 
-import imageProcessingVert from './shaders/verts/image-processing.vert';
-import imageProcessingFrag from './shaders/frags/image-processing.frag';
+import imageProcessingVertGl2 from './shaders/verts/image-processing-gl2.vert';
+import imageProcessingFragGl2 from './shaders/frags/image-processing-gl2.frag';
+
+import imageProcessingVertGl1 from './shaders/verts/image-processing-gl1.vert';
+import imageProcessingFragGl1 from './shaders/frags/image-processing-gl1.frag';
 
 export class ImageProcessing {
 
@@ -21,6 +25,8 @@ export class ImageProcessing {
 
   private _scaleX: number;
   private _scaleY: number;
+  private _flipVertical: number;
+  private _flipHorizontal: number;
   private _invert: number;
   private _hsl: Array<number>;
   private _gamma: number;
@@ -32,7 +38,7 @@ export class ImageProcessing {
 
   private ctx: Canvas2dCtx;
   private canvas: HTMLCanvasElement;
-  private gl: WebGL2RenderingContext;
+  private gl: WebGL2RenderingContext | WebGLRenderingContext;
   private program: WebGLProgram;
 
   private renderedImageBase64: string;
@@ -40,11 +46,13 @@ export class ImageProcessing {
   constructor() {
     this._scaleX = 1;
     this._scaleY = 1;
+    this.flipVertical(false);
+    this.flipHorizontal(false);
     this.invert(false);
     this._hsl = new Array<number>(3);
     this.hsl(0, 0, 0);
     this.gamma(1);
-    this.noise(0);
+    this.noise(0); // ?
     this.sepia(false);
     this.grayscale(false);
     this.temperature(0);
@@ -60,14 +68,22 @@ export class ImageProcessing {
 
       this.program = createProgram(
         this.gl,
-        compileShader(this.gl, this.gl.VERTEX_SHADER, imageProcessingVert),
-        compileShader(this.gl, this.gl.FRAGMENT_SHADER, imageProcessingFrag)
+        compileShader(this.gl, this.gl.VERTEX_SHADER, imageProcessingVertGl2),
+        compileShader(this.gl, this.gl.FRAGMENT_SHADER, imageProcessingFragGl2)
       );
 
       return;
     }
 
     if (verifyWebGl1()) {
+      this.gl = createWebgl1(this.canvas);
+
+      this.program = createProgram(
+        this.gl,
+        compileShader(this.gl, this.gl.VERTEX_SHADER, imageProcessingVertGl1),
+        compileShader(this.gl, this.gl.FRAGMENT_SHADER, imageProcessingFragGl1)
+      );
+
       return;
     }
   }
@@ -76,7 +92,7 @@ export class ImageProcessing {
     this.ctx?.destructor();
   }
 
-  public loadImage(image: File): Promise<void> {
+  public loadImage(image: File | Blob): Promise<void> {
     return new Promise((res, rej) => {
       this.ctx.loadImage(image)
       .then(() => {
@@ -113,6 +129,22 @@ export class ImageProcessing {
 
     this._scaleX = value;
   };
+
+  public flipVertical(value: boolean): void {
+    if (!!value) {
+      this._flipVertical = 1;
+    } else {
+      this._flipVertical = 0;
+    }
+  }
+
+  public flipHorizontal(value: boolean): void {
+    if (!!value) {
+      this._flipHorizontal = 1;
+    } else {
+      this._flipHorizontal = 0;
+    }
+  }
 
   public invert(value: boolean): void {
     if (!!value) {
@@ -233,27 +265,35 @@ export class ImageProcessing {
   }
 
   public transparency(value: number): void {
-    if (typeof(value) !== 'number' || !value) {
+    if (typeof(value) !== 'number') {
       value = 1;
     }
 
-    value = parseInt(value.toString());
+    value = parseFloat(value.toString());
 
     if (value > 1) {
       value = 1;
     }
 
     if (value < 0) {
-      value = 1;
+      value = 0;
     }
 
     this._transparency = value;
   }
 
+
+
   private renderGl2(): Promise<void> {
     return new Promise((res, rej) => {
       try
       {
+        if (!(this.gl instanceof WebGL2RenderingContext)) {
+          rej(new Error('Rendering contex is not WebGL2RenderingContext!'));
+
+          return;
+        }
+
         const imgWidth: number = parseInt((this.ctx.orgWidth * this._scaleX).toFixed(0));
         const imgHeight: number = parseInt((this.ctx.orgHeight * this._scaleY).toFixed(0));
   
@@ -263,8 +303,12 @@ export class ImageProcessing {
         const positionAttributeLocation: number = this.gl.getAttribLocation(this.program, 'a_position');
         const texCoordAttributeLocation: number = this.gl.getAttribLocation(this.program, 'a_texCoord');
         const resolutionUniformLocation: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_resolution');
+        const uniformFlipVertical: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_flipVertical');
+        const uniformFlipHorizontal: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_flipHorizontal');
         
         // from FRAG
+        const randUniformLocation: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_rand');
+        const imageUniformLocation: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_image');
         const uniformInvert: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_invert');
         const uniformGamma: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_gamma');
         const uniformHSL: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_hsl');
@@ -273,7 +317,6 @@ export class ImageProcessing {
         const uniformGrayscale: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_grayscale');
         const uniformTemperature: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_temperature');
         const uniformTransparency: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_transparency');
-        const imageUniformLocation: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_image');
   
         const vao: WebGLVertexArrayObject = this.gl.createVertexArray();
         this.gl.bindVertexArray(vao);
@@ -311,8 +354,11 @@ export class ImageProcessing {
         this.gl.bindVertexArray(vao);
 
         this.gl.uniform2f(resolutionUniformLocation, imgWidth, imgHeight);
+        this.gl.uniform1f(randUniformLocation, Math.random());
         this.gl.uniform1i(imageUniformLocation, 0);
 
+        this.gl.uniform1f(uniformFlipVertical, this._flipVertical);
+        this.gl.uniform1f(uniformFlipHorizontal, this._flipHorizontal);
         this.gl.uniform1f(uniformInvert, this._invert);
         this.gl.uniform3fv(uniformHSL, this._hsl);
         this.gl.uniform1f(uniformGamma, this._gamma);
@@ -339,13 +385,116 @@ export class ImageProcessing {
     });
   }
 
+
+
+  private renderGl1(): Promise<void> {
+    return new Promise((res, rej) => {
+      try
+      {
+        if (!(this.gl instanceof WebGLRenderingContext)) {
+          rej(new Error('Rendering contex is not WebGLRenderingContext!'));
+
+          return;
+        }
+
+        const imgWidth: number = parseInt((this.ctx.orgWidth * this._scaleX).toFixed(0));
+        const imgHeight: number = parseInt((this.ctx.orgHeight * this._scaleY).toFixed(0));
+  
+        webglResize(this.gl, this.canvas, imgWidth, imgHeight);
+
+        // from VERT
+        const positionAttributeLocation: number = this.gl.getAttribLocation(this.program, 'a_position');
+        const texCoordAttributeLocation: number = this.gl.getAttribLocation(this.program, 'a_texCoord');
+        const resolutionUniformLocation: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_resolution');
+        const uniformFlipVertical: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_flipVertical');
+        const uniformFlipHorizontal: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_flipHorizontal');
+
+        // from FRAG
+        const randUniformLocation: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_rand');
+        const imageUniformLocation: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_image');
+        const uniformInvert: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_invert');
+        const uniformGamma: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_gamma');
+        const uniformHSL: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_hsl');
+        const uniformNoise: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_noise');
+        const uniformSepia: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_sepia');
+        const uniformGrayscale: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_grayscale');
+        const uniformTemperature: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_temperature');
+        const uniformTransparency: WebGLUniformLocation = this.gl.getUniformLocation(this.program, 'u_transparency');
+
+        let positionBuffer: WebGLBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
+        setRectangle(this.gl, 0, 0, imgWidth, imgHeight);
+      
+        let texcoordBuffer: WebGLBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, texcoordBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([
+          0.0,  0.0,
+          1.0,  0.0,
+          0.0,  1.0,
+          0.0,  1.0,
+          1.0,  0.0,
+          1.0,  1.0,
+        ]), this.gl.STATIC_DRAW);
+
+        let texture = this.gl.createTexture();
+        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.ctx.getOrgImageData());
+
+        this.gl.useProgram(this.program);
+
+        this.gl.enableVertexAttribArray(positionAttributeLocation);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
+        this.gl.vertexAttribPointer(positionAttributeLocation, 2, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.enableVertexAttribArray(texCoordAttributeLocation);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, texcoordBuffer);
+        this.gl.vertexAttribPointer(texCoordAttributeLocation, 2, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.uniform2f(resolutionUniformLocation, imgWidth, imgHeight);
+        this.gl.uniform1f(randUniformLocation, Math.random());
+        this.gl.uniform1i(imageUniformLocation, 0);
+
+        this.gl.uniform1f(uniformFlipVertical, this._flipVertical);
+        this.gl.uniform1f(uniformFlipHorizontal, this._flipHorizontal);
+        this.gl.uniform1f(uniformFlipVertical, this._flipVertical);
+        this.gl.uniform1f(uniformFlipHorizontal, this._flipHorizontal);
+        this.gl.uniform1f(uniformInvert, this._invert);
+        this.gl.uniform3fv(uniformHSL, this._hsl);
+        this.gl.uniform1f(uniformGamma, this._gamma);
+        this.gl.uniform1f(uniformNoise, this._noise);
+        this.gl.uniform1f(uniformSepia, this._sepia);
+        this.gl.uniform1f(uniformGrayscale, this._grayscale);
+        this.gl.uniform3fv(uniformTemperature, this._temperature);
+        this.gl.uniform1f(uniformTransparency, this._transparency);
+
+        this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+
+        this.renderedImageBase64 = this.canvas.toDataURL('image/png');
+
+        res();
+      }
+      catch (err)
+      {
+        rej(err);
+      }
+    });
+  }
+
+
+
   public render(): Promise<void> {
+    this.ctx.putActiveImageData(this.ctx.getOrgImageData());
+
     if (verifyWebGl2()) {
       return this.renderGl2();
     }
 
     if (verifyWebGl1()) {
-
+      return this.renderGl1();
     }
   }
 

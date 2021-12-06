@@ -43,8 +43,6 @@ declare class Canvas2dCtx {
 	public get ctx(): CanvasRenderingContext2D | null;
   public get width(): number;
   public get height(): number;
-	private _name: string;
-  public get name(): string;
   private _size: number;
   public get size(): number;
   private _type: string;
@@ -56,7 +54,7 @@ declare class Canvas2dCtx {
 	private generate2dCtx(w: number, h: number): CanvasRenderingContext2D;
   private duplicateCtxOrg(): CanvasRenderingContext2D;
   private duplicateCtxActive(): CanvasRenderingContext2D;
-	public loadImage(file: File): Promise<void>;
+	public loadImage(file: File | Blob): Promise<void>;
 	public getOrgImageUrl(): string;
   public getOrgImageData(): ImageData;
 	public getActiveImageUrl(): string;
@@ -71,9 +69,12 @@ export declare class ImageProcessing {
 
 	private _scaleX: number;
   private _scaleY: number;
+	private _flipVertical: number;
+  private _flipHorizontal: number;
   private _invert: number;
 	private _hsl: Array<number>;
 	private _gamma: number;
+	private _noise: number;
 	private _sepia: number;
 	private _grayscale: number;
 	private _temperature: Array<number>;
@@ -90,19 +91,32 @@ export declare class ImageProcessing {
 
 	public scaleX(value: number): void;
 	public scaleY(value: number): void;
+	public flipVertical(value: boolean): void;
+	public flipHorizontal(value: boolean): void;
 	public invert(value: boolean): void;
 	public hsl(h: number, s: number, l: number): void;
 	public h(value: number): void;
 	public s(value: number): void;
 	public l(value: number): void;
 	public gamma(value: number): void;
+
+	/** 
+	 * Adds noise to the image.
+	 * WebGL2 only.
+	**/
+	public noise(value: number): void;
+
 	public sepia(value: boolean): void;
 	public grayscale(value: boolean): void;
 	public temperature(value: number): void;
 	public transparency(value: number): void;
 
-	public loadImage(image: File): Promise<void>;
+	public loadImage(image: File | Blob): Promise<void>;
 	public render(): Promise<void>;
+
+	/** 
+	 * return the base64url of the rendered image.
+	**/
 	public getImage(): string;
 
 }

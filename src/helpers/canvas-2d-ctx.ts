@@ -1,11 +1,6 @@
 export class Canvas2dCtx {
   private img: HTMLImageElement | null;
 
-  private _name: string;
-  public get name(): string {
-    return this._name;
-  }
-
   private _size: number;
   public get size(): number {
     return this._size;
@@ -40,7 +35,6 @@ export class Canvas2dCtx {
 
   destructor() {
     this.img = null;
-    this._name = undefined;
     this._size = undefined;
     this._type = undefined;
     this.org = null;
@@ -66,7 +60,7 @@ export class Canvas2dCtx {
     return context;
   }
 
-  public loadImage(file: File): Promise<void> {
+  public loadImage(file: File | Blob): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       var reader: FileReader = new FileReader();
 
@@ -77,7 +71,6 @@ export class Canvas2dCtx {
           image.onload = () => {
             this.img = image;
 
-            this._name = file?.name;
             this._size = file?.size;
             this._type = file?.type;
       
