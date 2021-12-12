@@ -1,4 +1,5 @@
 export class Canvas2dCtx {
+
   private img: HTMLImageElement | null;
 
   private _size: number;
@@ -29,11 +30,13 @@ export class Canvas2dCtx {
     return this.active?.canvas?.height;
   }
 
-  constructor() {
-
-  }
+  constructor() { }
 
   destructor() {
+    this.clear();
+  }
+
+  public clear(): void {
     this.img = null;
     this._size = undefined;
     this._type = undefined;
@@ -61,6 +64,12 @@ export class Canvas2dCtx {
   }
 
   public loadImage(file: File | Blob): Promise<void> {
+    if (!file) {
+      return;
+    }
+
+    this.clear(); 
+
     return new Promise<void>((resolve, reject) => {
       var reader: FileReader = new FileReader();
 
@@ -93,6 +102,10 @@ export class Canvas2dCtx {
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
+  }
+
+  public isLoaded(): boolean {
+    return !!this.org;
   }
 
   public getOrgImageUrl(): string {

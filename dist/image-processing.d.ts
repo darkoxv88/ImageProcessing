@@ -55,6 +55,7 @@ declare class Canvas2dCtx {
   private duplicateCtxOrg(): CanvasRenderingContext2D;
   private duplicateCtxActive(): CanvasRenderingContext2D;
 	public loadImage(file: File | Blob): Promise<void>;
+	public isLoaded(): boolean;
 	public getOrgImageUrl(): string;
   public getOrgImageData(): ImageData;
 	public getActiveImageUrl(): string;
@@ -112,11 +113,13 @@ export declare class ImageProcessing {
 	public transparency(value: number): void;
 
 	public loadImage(image: File | Blob): Promise<void>;
+	public isLoaded(): boolean;
 	public render(): Promise<void>;
 
 	/** 
 	 * return the base64url of the rendered image.
 	**/
 	public getImage(): string;
+	public isImageRendered(): boolean;
 
 }

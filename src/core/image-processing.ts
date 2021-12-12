@@ -52,7 +52,7 @@ export class ImageProcessing {
     this._hsl = new Array<number>(3);
     this.hsl(0, 0, 0);
     this.gamma(1);
-    this.noise(0); // ?
+    this.noise(0);
     this.sepia(false);
     this.grayscale(false);
     this.temperature(0);
@@ -90,20 +90,29 @@ export class ImageProcessing {
 
   destructor(): void {
     this.ctx?.destructor();
+    this.renderedImageBase64 = '';
   }
 
   public loadImage(image: File | Blob): Promise<void> {
     return new Promise((res, rej) => {
+      this.renderedImageBase64 = '';
+      
       this.ctx.loadImage(image)
-      .then(() => {
-        res();
-      })
-      .catch((err: any) => {
-        console.error('There was an error while loading image.');
+        .then(() => {
+          this.renderedImageBase64 = this.ctx.getOrgImageUrl();
 
-        rej(err);
-      })
+          res();
+        })
+        .catch((err: any) => {
+          console.error('There was an error while loading image.');
+
+          rej(err);
+        })
     });
+  }
+
+  public isLoaded(): boolean {
+    return this.ctx.isLoaded();
   }
 
   public scaleX(value: number): void {
@@ -500,6 +509,10 @@ export class ImageProcessing {
 
   public getImage(): string {
     return this.renderedImageBase64;
+  }
+
+  public isImageRendered(): boolean {
+    return !!(this.renderedImageBase64);
   }
 
 }
