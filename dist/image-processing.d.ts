@@ -33,6 +33,17 @@ backup:
 
 **/
 
+declare class Histogram {
+
+  public r: Array<number>;
+  public g: Array<number>;
+  public b: Array<number>;
+  public a: Array<number>;
+
+  constructor(imgData: ImageData);
+
+}
+
 declare class Canvas2dCtx {
 
 	private img: HTMLImageElement | null;
@@ -61,6 +72,7 @@ declare class Canvas2dCtx {
 	public getActiveImageUrl(): string;
   public getActiveImageData(): ImageData;
   public putActiveImageData(data: ImageData): void;
+	public histogram(): Histogram;
 
 }
 

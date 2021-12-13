@@ -1,4 +1,4 @@
-import { Canvas2dCtx } from "../helpers/canvas-2d-ctx";
+import { Canvas2dCtx } from "./canvas-2d-ctx";
 import { 
   verifyWebGl1, 
   verifyWebGl2, 
@@ -99,9 +99,13 @@ export class ImageProcessing {
       
       this.ctx.loadImage(image)
         .then(() => {
-          this.renderedImageBase64 = this.ctx.getOrgImageUrl();
-
-          res();
+          this.render()
+            .then(() => {
+              res();
+            })
+            .catch((err) => {
+              rej(err);
+            });
         })
         .catch((err: any) => {
           console.error('There was an error while loading image.');

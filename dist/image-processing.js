@@ -49,10 +49,26 @@ function isProduction() {
     return production;
 }
 
-;// CONCATENATED MODULE: ./src/helpers/canvas-2d-ctx.ts
-class Canvas2dCtx {
-    constructor() {
+;// CONCATENATED MODULE: ./src/helpers/histogram.ts
+class Histogram {
+    constructor(imgData) {
+        this.r = new Array();
+        this.g = new Array();
+        this.b = new Array();
+        this.a = new Array();
+        for (var i = 0; i < 256; i += 1) {
+            this.r[i] = 0;
+            this.g[i] = 0;
+            this.b[i] = 0;
+            this.a[i] = 0;
+        }
     }
+}
+
+;// CONCATENATED MODULE: ./src/core/canvas-2d-ctx.ts
+
+class Canvas2dCtx {
+    constructor() { }
     get size() {
         return this._size;
     }
@@ -79,6 +95,9 @@ class Canvas2dCtx {
         return (_b = (_a = this.active) === null || _a === void 0 ? void 0 : _a.canvas) === null || _b === void 0 ? void 0 : _b.height;
     }
     destructor() {
+        this.clear();
+    }
+    clear() {
         this.img = null;
         this._size = undefined;
         this._type = undefined;
@@ -104,6 +123,10 @@ class Canvas2dCtx {
         return context;
     }
     loadImage(file) {
+        if (!file) {
+            return;
+        }
+        this.clear();
         return new Promise((resolve, reject) => {
             var reader = new FileReader();
             reader.onload = (ev) => {
@@ -131,6 +154,9 @@ class Canvas2dCtx {
             reader.readAsDataURL(file);
         });
     }
+    isLoaded() {
+        return !!this.org;
+    }
     getOrgImageUrl() {
         var _a, _b;
         return (_b = (_a = this.org) === null || _a === void 0 ? void 0 : _a.canvas) === null || _b === void 0 ? void 0 : _b.toDataURL('image/png');
@@ -157,6 +183,23 @@ class Canvas2dCtx {
         catch (err) {
             console.error(err);
         }
+    }
+    histogram() {
+        return new Histogram(this.getActiveImageData());
+    }
+    flipImage(flipH, flipV) {
+        var scaleH = flipH ? -1 : 1;
+        var scaleV = flipV ? -1 : 1;
+        if (flipH) {
+            this.active.translate(this.width, 0);
+        }
+        if (flipV) {
+            this.active.translate(0, this.height);
+        }
+        this.active.scale(scaleH, scaleV);
+        this.active.drawImage(this.active.canvas, 0, 0);
+        this.active.setTransform(1, 0, 0, 1, 0, 0);
+        this.active.restore();
     }
 }
 
@@ -364,7 +407,7 @@ class ImageProcessing {
         this._hsl = new Array(3);
         this.hsl(0, 0, 0);
         this.gamma(1);
-        this.noise(0); // ?
+        this.noise(0);
         this.sepia(false);
         this.grayscale(false);
         this.temperature(0);
@@ -386,18 +429,29 @@ class ImageProcessing {
     destructor() {
         var _a;
         (_a = this.ctx) === null || _a === void 0 ? void 0 : _a.destructor();
+        this.renderedImageBase64 = '';
     }
     loadImage(image) {
         return new Promise((res, rej) => {
+            this.renderedImageBase64 = '';
             this.ctx.loadImage(image)
                 .then(() => {
-                res();
+                this.render()
+                    .then(() => {
+                    res();
+                })
+                    .catch((err) => {
+                    rej(err);
+                });
             })
                 .catch((err) => {
                 console.error('There was an error while loading image.');
                 rej(err);
             });
         });
+    }
+    isLoaded() {
+        return this.ctx.isLoaded();
     }
     scaleX(value) {
         if (typeof (value) !== 'number' || !value) {
@@ -709,6 +763,9 @@ class ImageProcessing {
     }
     getImage() {
         return this.renderedImageBase64;
+    }
+    isImageRendered() {
+        return !!(this.renderedImageBase64);
     }
 }
 ImageProcessing.Canvas2dCtx = Canvas2dCtx;

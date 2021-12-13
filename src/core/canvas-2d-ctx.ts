@@ -1,3 +1,7 @@
+import { byte } from "../utility/byte";
+import { convolution } from "../helpers/convolution";
+import { Histogram } from "../helpers/histogram";
+
 export class Canvas2dCtx {
 
   private img: HTMLImageElement | null;
@@ -135,6 +139,28 @@ export class Canvas2dCtx {
     { 
       console.error(err);
     }
+  }
+
+  public histogram(): Histogram {
+    return new Histogram(this.getActiveImageData());
+  }
+
+  public flipImage(flipH: boolean, flipV: boolean): void {
+    var scaleH = flipH ? -1 : 1;
+    var scaleV = flipV ? -1 : 1;
+
+    if(flipH) { 
+      this.active.translate(this.width, 0); 
+    }
+
+    if(flipV) { 
+      this.active.translate(0, this.height); 
+    } 
+
+    this.active.scale(scaleH, scaleV);
+    this.active.drawImage(this.active.canvas, 0, 0);
+    this.active.setTransform(1,0,0,1,0,0);
+    this.active.restore();
   }
 
 }
