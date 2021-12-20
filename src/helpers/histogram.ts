@@ -17,6 +17,13 @@ export class Histogram {
       this.b[i] = 0;
       this.a[i] = 0;
     }
+
+    for (var i = 0; i < imgData.data.length; i += 4) {
+      this.r[imgData.data[i]] += 1;
+      this.g[imgData.data[i + 1]] += 1;
+      this.b[imgData.data[i + 2]] += 1;
+      this.a[imgData.data[i + 3]] += 1;
+    }
   }
 
 }

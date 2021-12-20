@@ -24,17 +24,66 @@ export class ImageProcessing {
   public static Canvas2dCtx: typeof Canvas2dCtx = Canvas2dCtx;
 
   private _scaleX: number;
+  public get getScaleX(): number {
+    return this._scaleX;
+  }
+
   private _scaleY: number;
+  public get getScaleY(): number {
+    return this._scaleY;
+  }
+
   private _flipVertical: number;
+  public get getFlipVertical(): boolean {
+    return !!this._flipVertical;
+  }
+
   private _flipHorizontal: number;
+  public get getFlipHorizontal(): boolean {
+    return !!this._flipHorizontal;
+  }
+
   private _invert: number;
+  public get getInvert(): boolean {
+    return !!this._invert;
+  }
+
   private _hsl: Array<number>;
+  public get getHue(): number {
+    return this._hsl[0];
+  }
+  public get getSaturation(): number {
+    return this._hsl[1];
+  }
+  public get getLightness(): number {
+    return this._hsl[2];
+  }
+
   private _gamma: number;
+  public get getGamma(): number {
+    return this._gamma;
+  }
+
   private _noise: number;
+  public get getNoise(): number {
+    return this._noise;
+  }
+
   private _sepia: number;
+  public get getSepia(): boolean {
+    return !!this._sepia;
+  }
+
   private _grayscale: number;
+  public get getGrayscale(): boolean {
+    return !!this._grayscale;
+  }
+
   private _temperature: Array<number>;
   private _transparency: number;
+  public get getTransparency(): number {
+    return this._transparency;
+  }
 
   private ctx: Canvas2dCtx;
   private canvas: HTMLCanvasElement;
@@ -44,8 +93,8 @@ export class ImageProcessing {
   private renderedImageBase64: string;
 
   constructor() {
-    this._scaleX = 1;
-    this._scaleY = 1;
+    this.scaleX(1);
+    this.scaleY(1);
     this.flipVertical(false);
     this.flipHorizontal(false);
     this.invert(false);
@@ -168,12 +217,12 @@ export class ImageProcessing {
   }
 
   public hsl(h: number, s: number, l: number): void {
-    this.h(h);
-    this.s(s);
-    this.l(l);
+    this.hue(h);
+    this.saturation(s);
+    this.lightness(l);
   }
 
-  public h(value: number): void {
+  public hue(value: number): void {
     if (typeof(value) !== 'number') {
       value = 0;
     }
@@ -191,7 +240,7 @@ export class ImageProcessing {
     this._hsl[0] = value;
   }
 
-  public s(value: number): void {
+  public saturation(value: number): void {
     if (typeof(value) !== 'number') {
       value = 0;
     }
@@ -207,7 +256,7 @@ export class ImageProcessing {
     this._hsl[1] = value;
   }
 
-  public l(value: number): void {
+  public lightness(value: number): void {
     if (typeof(value) !== 'number') {
       value = 0;
     }
@@ -294,8 +343,6 @@ export class ImageProcessing {
 
     this._transparency = value;
   }
-
-
 
   private renderGl2(): Promise<void> {
     return new Promise((res, rej) => {
@@ -398,8 +445,6 @@ export class ImageProcessing {
     });
   }
 
-
-
   private renderGl1(): Promise<void> {
     return new Promise((res, rej) => {
       try
@@ -496,8 +541,6 @@ export class ImageProcessing {
       }
     });
   }
-
-
 
   public render(): Promise<void> {
     this.ctx.putActiveImageData(this.ctx.getOrgImageData());

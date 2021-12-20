@@ -34,7 +34,7 @@ exports:
 
 backup:
 
-  window.___webpack_export_dp_ImageProcessing___.definition
+  window.___webpack_export_dp___.ImageProcessing;
 
 **/
 
@@ -42,8 +42,8 @@ var libName = 'ImageProcessing';
 
 try
 {
-  if (getRoot()[libName] && isProduction()) {
-    throw new Error('window["' + libName + '"] is already in use! Switching to: ' + 'window["___webpack_export_' + libName + '___"].definition');
+	if (getRoot()[libName] && isProduction()) {
+    throw new Error('window["' + libName + '"] is already in use! Switching to: ' + 'window["___webpack_export_dp___"].' + libName);
   }
 
   getRoot()[libName] = Api;
@@ -52,9 +52,9 @@ catch(err)
 {
   console.error(err);
 
-	if (typeof(getRoot()['___webpack_export_dp_' + libName + '___']) !== 'object' || !(getRoot()['___webpack_export_dp_' + libName + '___'])) {
-		getRoot()['___webpack_export_dp_' + libName + '___'] = ({ });
+	if (typeof(getRoot()['___webpack_export_dp___']) !== 'object') {
+		getRoot()['___webpack_export_dp___'] = ({ });
 	}
 
-	getRoot()['___webpack_export_dp_' + libName + '___'].definition = Api;
+	getRoot()['___webpack_export_dp___'][libName] = Api;
 }

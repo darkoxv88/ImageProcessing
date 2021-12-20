@@ -3,8 +3,8 @@ import { ImageProcessing } from "./core/image-processing"
 
 export const Api: typeof ImageProcessing = ImageProcessing;
 
+/*
 const toTest: boolean = false;
-
 if (toTest) {
   const test = new Api();
 
@@ -14,7 +14,6 @@ if (toTest) {
     input.setAttribute('type', 'file');
     input.onchange = async (ev: any) => {
       await test.loadImage(ev.target.files[0]);
-      await test.render();
       img.src = test.getImage();
     }
     const div1 = document.createElement('div');
@@ -23,3 +22,4 @@ if (toTest) {
     document.body.appendChild(div1);
   }
 }
+*/

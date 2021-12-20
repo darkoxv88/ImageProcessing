@@ -29,7 +29,7 @@ exports:
 
 backup:
 
-  window.___webpack_export_dp_ImageProcessing___.definition
+  window.___webpack_export_dp___.ImageProcessing;
 
 **/
 
@@ -38,7 +38,7 @@ backup:
 var __webpack_exports__ = {};
 
 ;// CONCATENATED MODULE: ./src/refs/root.ts
-var root = typeof window !== 'undefined' ? window : typeof globalThis !== 'undefined' ? globalThis : typeof self !== 'undefined' ? self : ({});
+const root = typeof window !== 'undefined' ? window : typeof globalThis !== 'undefined' ? globalThis : typeof self !== 'undefined' ? self : ({});
 function getRoot() {
     return root;
 }
@@ -47,6 +47,81 @@ function getRoot() {
 var production = true;
 function isProduction() {
     return production;
+}
+
+;// CONCATENATED MODULE: ./src/utility/byte.ts
+function byte_byte(value) {
+    try {
+        value = parseInt(value);
+        if (value > 255) {
+            return 255;
+        }
+        if (value < 0) {
+            return 0;
+        }
+        return value;
+    }
+    catch (error) {
+        console.error(error);
+        return 0;
+    }
+}
+
+;// CONCATENATED MODULE: ./src/helpers/convolution.ts
+
+function convolution(imgData, operationMatrix) {
+    if (!(imgData instanceof ImageData)) {
+        return null;
+    }
+    if (!Array.isArray(operationMatrix)) {
+        return imgData;
+    }
+    if (imgData.data.length <= 1) {
+        return imgData;
+    }
+    let side = Math.round(Math.sqrt(operationMatrix.length));
+    let halfSide = Math.floor(side / 2);
+    let canvasWidth = imgData.width;
+    let canvasHeight = imgData.height;
+    let outputData = new ImageData(canvasWidth, canvasHeight);
+    for (let h = 0; h < canvasHeight; h++) {
+        for (let w = 0; w < canvasWidth; w++) {
+            let position = (h * canvasWidth + w) * 4;
+            let sumR = 0, sumG = 0, sumB = 0;
+            for (let matH = 0; matH < side; matH++) {
+                for (let matW = 0; matW < side; matW++) {
+                    let currentMatH = h + matH - halfSide;
+                    let currentMatW = w + matW - halfSide;
+                    while (currentMatH < 0) {
+                        currentMatH += 1;
+                    }
+                    ;
+                    while (currentMatH >= canvasHeight) {
+                        currentMatH -= 1;
+                    }
+                    ;
+                    while (currentMatW < 0) {
+                        currentMatW += 1;
+                    }
+                    ;
+                    while (currentMatW >= canvasWidth) {
+                        currentMatW -= 1;
+                    }
+                    ;
+                    let offset = (currentMatH * canvasWidth + currentMatW) * 4;
+                    let operation = operationMatrix[matH * side + matW];
+                    sumR += imgData.data[offset] * operation;
+                    sumG += imgData.data[offset + 1] * operation;
+                    sumB += imgData.data[offset + 2] * operation;
+                }
+            }
+            outputData.data[position] = byte_byte(sumR);
+            outputData.data[position + 1] = byte_byte(sumG);
+            outputData.data[position + 2] = byte_byte(sumB);
+            outputData.data[position + 3] = imgData.data[position + 3];
+        }
+    }
+    return outputData;
 }
 
 ;// CONCATENATED MODULE: ./src/helpers/histogram.ts
@@ -62,10 +137,17 @@ class Histogram {
             this.b[i] = 0;
             this.a[i] = 0;
         }
+        for (var i = 0; i < imgData.data.length; i += 4) {
+            this.r[imgData.data[i]] += 1;
+            this.g[imgData.data[i + 1]] += 1;
+            this.b[imgData.data[i + 2]] += 1;
+            this.a[imgData.data[i + 3]] += 1;
+        }
     }
 }
 
 ;// CONCATENATED MODULE: ./src/core/canvas-2d-ctx.ts
+
 
 class Canvas2dCtx {
     constructor() { }
@@ -188,8 +270,8 @@ class Canvas2dCtx {
         return new Histogram(this.getActiveImageData());
     }
     flipImage(flipH, flipV) {
-        var scaleH = flipH ? -1 : 1;
-        var scaleV = flipV ? -1 : 1;
+        var scaleH = flipH ? (-1) : 1;
+        var scaleV = flipV ? (-1) : 1;
         if (flipH) {
             this.active.translate(this.width, 0);
         }
@@ -202,6 +284,7 @@ class Canvas2dCtx {
         this.active.restore();
     }
 }
+Canvas2dCtx.convolution = convolution;
 
 ;// CONCATENATED MODULE: ./src/utility/webgl.ts
 const forceGL1 = false;
@@ -399,8 +482,8 @@ function colorTemperatureToRgb(value) {
 
 class ImageProcessing {
     constructor() {
-        this._scaleX = 1;
-        this._scaleY = 1;
+        this.scaleX(1);
+        this.scaleY(1);
         this.flipVertical(false);
         this.flipHorizontal(false);
         this.invert(false);
@@ -425,6 +508,45 @@ class ImageProcessing {
             this.program = createProgram(this.gl, compileShader(this.gl, this.gl.VERTEX_SHADER, image_processing_gl1), compileShader(this.gl, this.gl.FRAGMENT_SHADER, frags_image_processing_gl1));
             return;
         }
+    }
+    get getScaleX() {
+        return this._scaleX;
+    }
+    get getScaleY() {
+        return this._scaleY;
+    }
+    get getFlipVertical() {
+        return !!this._flipVertical;
+    }
+    get getFlipHorizontal() {
+        return !!this._flipHorizontal;
+    }
+    get getInvert() {
+        return !!this._invert;
+    }
+    get getHue() {
+        return this._hsl[0];
+    }
+    get getSaturation() {
+        return this._hsl[1];
+    }
+    get getLightness() {
+        return this._hsl[2];
+    }
+    get getGamma() {
+        return this._gamma;
+    }
+    get getNoise() {
+        return this._noise;
+    }
+    get getSepia() {
+        return !!this._sepia;
+    }
+    get getGrayscale() {
+        return !!this._grayscale;
+    }
+    get getTransparency() {
+        return this._transparency;
     }
     destructor() {
         var _a;
@@ -498,11 +620,11 @@ class ImageProcessing {
         }
     }
     hsl(h, s, l) {
-        this.h(h);
-        this.s(s);
-        this.l(l);
+        this.hue(h);
+        this.saturation(s);
+        this.lightness(l);
     }
-    h(value) {
+    hue(value) {
         if (typeof (value) !== 'number') {
             value = 0;
         }
@@ -515,7 +637,7 @@ class ImageProcessing {
         }
         this._hsl[0] = value;
     }
-    s(value) {
+    saturation(value) {
         if (typeof (value) !== 'number') {
             value = 0;
         }
@@ -527,7 +649,7 @@ class ImageProcessing {
         }
         this._hsl[1] = value;
     }
-    l(value) {
+    lightness(value) {
         if (typeof (value) !== 'number') {
             value = 0;
         }
@@ -771,36 +893,9 @@ class ImageProcessing {
 ImageProcessing.Canvas2dCtx = Canvas2dCtx;
 
 ;// CONCATENATED MODULE: ./src/api.ts
-var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-
 
 const Api = ImageProcessing;
 const toTest = false;
-if (toTest) {
-    const test = new Api();
-    getRoot().onload = function () {
-        const img = new Image();
-        const input = document.createElement('input');
-        input.setAttribute('type', 'file');
-        input.onchange = (ev) => __awaiter(this, void 0, void 0, function* () {
-            yield test.loadImage(ev.target.files[0]);
-            yield test.render();
-            img.src = test.getImage();
-        });
-        const div1 = document.createElement('div');
-        div1.append(input);
-        div1.append(img);
-        document.body.appendChild(div1);
-    };
-}
 
 ;// CONCATENATED MODULE: ./src/index.js
 
@@ -814,8 +909,8 @@ var libName = 'ImageProcessing';
 
 try
 {
-  if (getRoot()[libName] && isProduction()) {
-    throw new Error('window["' + libName + '"] is already in use! Switching to: ' + 'window["___webpack_export_' + libName + '___"].definition');
+	if (getRoot()[libName] && isProduction()) {
+    throw new Error('window["' + libName + '"] is already in use! Switching to: ' + 'window["___webpack_export_dp___"].' + libName);
   }
 
   getRoot()[libName] = Api;
@@ -824,11 +919,11 @@ catch(err)
 {
   console.error(err);
 
-	if (typeof(getRoot()['___webpack_export_dp_' + libName + '___']) !== 'object' || !(getRoot()['___webpack_export_dp_' + libName + '___'])) {
-		getRoot()['___webpack_export_dp_' + libName + '___'] = ({ });
+	if (typeof(getRoot()['___webpack_export_dp___']) !== 'object') {
+		getRoot()['___webpack_export_dp___'] = ({ });
 	}
 
-	getRoot()['___webpack_export_dp_' + libName + '___'].definition = Api;
+	getRoot()['___webpack_export_dp___'][libName] = Api;
 }
 
 /******/ })()

@@ -46,6 +46,8 @@ declare class Histogram {
 
 declare class Canvas2dCtx {
 
+	public static convolution(imgData: ImageData, operationMatrix: Array<number>): ImageData;
+
 	private img: HTMLImageElement | null;
 	private org: CanvasRenderingContext2D | null;
 	public get orgWidth(): number;
@@ -81,17 +83,30 @@ export declare class ImageProcessing {
 	public static Canvas2dCtx: typeof Canvas2dCtx;
 
 	private _scaleX: number;
+	public get getScaleX(): number;
   private _scaleY: number;
+	public get getScaleY(): number;
 	private _flipVertical: number;
+	public get getFlipVertical(): boolean;
   private _flipHorizontal: number;
+	public get getFlipHorizontal(): boolean;
   private _invert: number;
+	public get getInvert(): boolean;
 	private _hsl: Array<number>;
+	public get getHue(): number;
+	public get getSaturation(): number;
+	public get getLightness(): number;
 	private _gamma: number;
+	public get getGamma(): number;
 	private _noise: number;
+	public get getNoise(): number;
 	private _sepia: number;
+	public get getSepia(): boolean;
 	private _grayscale: number;
+	public get getGrayscale(): boolean;
 	private _temperature: Array<number>;
   private _transparency: number;
+	public get getTransparency(): number;
 
 	private ctx: Canvas2dCtx;
 	private canvas: HTMLCanvasElement;
@@ -108,9 +123,9 @@ export declare class ImageProcessing {
 	public flipHorizontal(value: boolean): void;
 	public invert(value: boolean): void;
 	public hsl(h: number, s: number, l: number): void;
-	public h(value: number): void;
-	public s(value: number): void;
-	public l(value: number): void;
+	public hue(value: number): void;
+	public saturation(value: number): void;
+	public lightness(value: number): void;
 	public gamma(value: number): void;
 
 	/** 

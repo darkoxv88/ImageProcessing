@@ -1,8 +1,9 @@
-import { byte } from "../utility/byte";
 import { convolution } from "../helpers/convolution";
 import { Histogram } from "../helpers/histogram";
 
 export class Canvas2dCtx {
+
+  public static convolution = convolution;
 
   private img: HTMLImageElement | null;
 
@@ -146,8 +147,8 @@ export class Canvas2dCtx {
   }
 
   public flipImage(flipH: boolean, flipV: boolean): void {
-    var scaleH = flipH ? -1 : 1;
-    var scaleV = flipV ? -1 : 1;
+    var scaleH = flipH ? (-1) : 1;
+    var scaleV = flipV ? (-1) : 1;
 
     if(flipH) { 
       this.active.translate(this.width, 0); 
