@@ -1,6 +1,6 @@
 /**
   * 
-	* @author Darko Petrovic
+    * @author Darko Petrovic
   * @Link Facebook: https://www.facebook.com/WitchkingOfAngmarr
   * @Link GitHub: https://github.com/darkoxv88
   * 
@@ -482,8 +482,8 @@ function colorTemperatureToRgb(value) {
 
 class ImageProcessing {
     constructor() {
-        this.scaleX(1);
-        this.scaleY(1);
+        this._scaleX = 1;
+        this._scaleY = 1;
         this.flipVertical(false);
         this.flipHorizontal(false);
         this.invert(false);
@@ -576,7 +576,7 @@ class ImageProcessing {
         return this.ctx.isLoaded();
     }
     scaleX(value) {
-        if (typeof (value) !== 'number' || !value) {
+        if (typeof (value) !== 'number') {
             return;
         }
         if (value < 0.001) {
@@ -586,7 +586,7 @@ class ImageProcessing {
     }
     ;
     scaleY(value) {
-        if (typeof (value) !== 'number' || !value) {
+        if (typeof (value) !== 'number') {
             return;
         }
         if (value < 0.001) {
@@ -895,7 +895,6 @@ ImageProcessing.Canvas2dCtx = Canvas2dCtx;
 ;// CONCATENATED MODULE: ./src/api.ts
 
 const Api = ImageProcessing;
-const toTest = false;
 
 ;// CONCATENATED MODULE: ./src/index.js
 

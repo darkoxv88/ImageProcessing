@@ -93,8 +93,8 @@ export class ImageProcessing {
   private renderedImageBase64: string;
 
   constructor() {
-    this.scaleX(1);
-    this.scaleY(1);
+    this._scaleX = 1;
+    this._scaleY = 1;
     this.flipVertical(false);
     this.flipHorizontal(false);
     this.invert(false);
@@ -169,7 +169,7 @@ export class ImageProcessing {
   }
 
   public scaleX(value: number): void {
-    if (typeof(value) !== 'number' || !value) {
+    if (typeof(value) !== 'number') {
       return
     }
 
@@ -181,7 +181,7 @@ export class ImageProcessing {
   };
 
   public scaleY(value: number): void {
-    if (typeof(value) !== 'number' || !value) {
+    if (typeof(value) !== 'number') {
       return
     }
     
