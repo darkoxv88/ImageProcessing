@@ -27,10 +27,6 @@ exports:
 
   window.ImageProcessing;
 
-backup:
-
-  window.___webpack_export_dp_ImageProcessing___.definition
-
 **/
 
 declare class Histogram {

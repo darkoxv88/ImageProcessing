@@ -27,15 +27,10 @@ exports:
 
   window.ImageProcessing;
 
-backup:
-
-  window.___webpack_export_dp___.ImageProcessing;
-
 **/
 
-/******/ (() => { // webpackBootstrap
-/******/ 	"use strict";
-var __webpack_exports__ = {};
+(() => {
+"use strict";
 
 ;// CONCATENATED MODULE: ./src/refs/root.ts
 const root = typeof window !== 'undefined' ? window : typeof globalThis !== 'undefined' ? globalThis : typeof self !== 'undefined' ? self : ({});
@@ -908,8 +903,8 @@ var libName = 'ImageProcessing';
 
 try
 {
-	if (getRoot()[libName] && isProduction()) {
-    throw new Error('window["' + libName + '"] is already in use! Switching to: ' + 'window["___webpack_export_dp___"].' + libName);
+  if (getRoot()[libName] && isProduction()) {
+    throw new Error('window["' + libName + '"] is already in use!');
   }
 
   getRoot()[libName] = Api;
@@ -917,13 +912,7 @@ try
 catch(err)
 {
   console.error(err);
-
-	if (typeof(getRoot()['___webpack_export_dp___']) !== 'object') {
-		getRoot()['___webpack_export_dp___'] = ({ });
-	}
-
-	getRoot()['___webpack_export_dp___'][libName] = Api;
 }
 
-/******/ })()
+})()
 ;
